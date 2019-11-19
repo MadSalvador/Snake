@@ -9,7 +9,7 @@ let widthInBlocks = width / blockSize;
 let heightInBlocks = height / blockSize;
 let score = 0;
 let snakeDefaultSpeed = 400;
-let gameOverCheck = false;  // Спроба (1) уникнути багу. Суть багу: можливість відновитися після програшу за допомогою стрілок.
+let gameOverCheck = false;  
 
 let drawBorder = function () {
     ctx.fillStyle = "Gray";
@@ -17,7 +17,7 @@ let drawBorder = function () {
     ctx.fillRect(0, height - blockSize, width, blockSize);
     ctx.fillRect(0, 0, blockSize, height);
     ctx.fillRect(width - blockSize, 0, blockSize, height);
-}
+};
 
 let drawScore = function () {
     ctx.font = "20px Courier";
@@ -25,7 +25,7 @@ let drawScore = function () {
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText("Score: " + score, blockSize, blockSize);
-}
+};
 
 let gameOver = function () {
     clearInterval(gameLoop);
@@ -35,12 +35,7 @@ let gameOver = function () {
     ctx.textBaseline = "middle";
     ctx.fillText("Game Over", width / 2, height / 2);
     gameOverCheck = true;
-}
-
-let Block = function (col, row) {
-    this.col = col;
-    this.row = row;
-}
+};
 
 let circle = function(x, y, radius, fillCircle) {
     ctx.beginPath();
@@ -50,92 +45,7 @@ let circle = function(x, y, radius, fillCircle) {
     } else {
         ctx.stroke();
     }
-}
-
-Block.prototype.drawSquare = function (color) {
-    let x = this.col * blockSize;
-    let y = this.row * blockSize;
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, blockSize, blockSize);
-}
-
-Block.prototype.drawCircle = function (color) {
-    let centerX = this.col * blockSize + blockSize / 2;
-    let centerY = this.row * blockSize + blockSize / 2;
-    ctx.fillStyle = color;
-    circle(centerX, centerY, blockSize / 2, true);
-}
-
-Block.prototype.equal = function (otherBlock) {
-    return this.col === otherBlock.col && this.row === otherBlock.row;
-}
-
-let Snake = function () {
-    this.segments = [
-        new Block(7, 5),
-        new Block(7, 5),
-        new Block(7, 5)
-    ];
-
-    this.direction = "right";
-    this.nextDirection = "right";
-}
-
-Snake.prototype.draw = function () {
-    for(let i = 0; i < this.segments.length; i++) {
-        this.segments[i].drawSquare("Blue");
-    }
-}
-
-Snake.prototype.move = function () {
-    let head = this.segments[0];
-    let newHead;
-
-    this.direction = this.nextDirection;
-
-    if (this.direction === "right") {
-        newHead = new Block(head.col + 1, head.row);
-    } else if (this.direction === "down") {
-        newHead = new Block(head.col, head.row + 1);
-    } else if (this.direction === "left") {
-        newHead = new Block(head.col - 1, head.row);
-    } else if (this.direction === "up") {
-        newHead = new Block(head.col, head.row - 1);
-    }
-
-    if (this.checkCollision(newHead)) {
-        gameOver();
-        return;
-    }
-
-    this.segments.unshift(newHead);
-
-    if(newHead.equal(apple.position)) {
-        score++;
-        apple.move();
-        snakeIncreaseSpeed();
-    } else {
-        this.segments.pop();
-    }
-}
-
-Snake.prototype.checkCollision = function (head) {
-    let leftCollision = (head.col === 0);
-    let topCollision = (head.row === 0);
-    let rightCollision = (head.col === widthInBlocks - 1);
-    let bottomCollision = (head.row === heightInBlocks - 1);
-
-    let wallCollison = leftCollision || topCollision || rightCollision || bottomCollision;
-    let selfCollison = false;
-
-    for(let i = 0; i < this.segments.length; i++) {
-        if(head.equal(this.segments[i])) {
-            selfCollison = true;
-        }
-    }
-
-    return wallCollison || selfCollison;
-}
+};
 
 let directions = {
     37: "left",
@@ -151,45 +61,140 @@ $("body").keydown(function (event){
     }
 });
 
-Snake.prototype.setDirection = function (newDirection) {
-    if (this.direction === "up" && newDirection === "down") {
-        return;
-    } else if (this.direction === "right" && newDirection === "left") {
-        return;
-    } else if (this.direction === "down" && newDirection === "up") {
-        return;
-    } else if (this.direction === "left" && newDirection === "right") {
-        return;
+class Block { 
+    constructor (col, row) {
+        this.col = col;
+        this.row = row; 
     }
 
-    this.nextDirection = newDirection;
+    drawSquare (color) {
+        let x = this.col * blockSize;
+        let y = this.row * blockSize;
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, blockSize, blockSize);
+    }
+    
+    drawCircle (color) {
+        let centerX = this.col * blockSize + blockSize / 2;
+        let centerY = this.row * blockSize + blockSize / 2;
+        ctx.fillStyle = color;
+        circle(centerX, centerY, blockSize / 2, true);
+    }
+
+    equal (otherBlock) {
+        return this.col === otherBlock.col && this.row === otherBlock.row;
+    }
 }
 
-let Apple = function () {
-    this.position = new Block(10, 10);
+class Snake {
+    constructor() {
+        this.segments = [
+            new Block(7, 5),
+            new Block(7, 5),
+            new Block(7, 5)
+        ];
+        this.direction = "right";
+        this.nextDirection = "right";
+    }
+
+    draw () {
+        for(let i = 0; i < this.segments.length; i++) {
+            this.segments[i].drawSquare("Blue");
+        }
+    }
+
+    move () {
+        let head = this.segments[0];
+        let newHead;
+    
+        this.direction = this.nextDirection;
+    
+        if (this.direction === "right") {
+            newHead = new Block(head.col + 1, head.row);
+        } else if (this.direction === "down") {
+            newHead = new Block(head.col, head.row + 1);
+        } else if (this.direction === "left") {
+            newHead = new Block(head.col - 1, head.row);
+        } else if (this.direction === "up") {
+            newHead = new Block(head.col, head.row - 1);
+        }
+    
+        if (this.checkCollision(newHead)) {
+            gameOver();
+            return;
+        }
+    
+        this.segments.unshift(newHead);
+    
+        if(newHead.equal(apple.position)) {
+            score++;
+            apple.move();
+            snakeIncreaseSpeed();
+        } else {
+            this.segments.pop();
+        }
+    }
+    
+    checkCollision (head) {
+        let leftCollision = (head.col === 0);
+        let topCollision = (head.row === 0);
+        let rightCollision = (head.col === widthInBlocks - 1);
+        let bottomCollision = (head.row === heightInBlocks - 1);
+    
+        let wallCollison = leftCollision || topCollision || rightCollision || bottomCollision;
+        let selfCollison = false;
+    
+        for(let i = 0; i < this.segments.length; i++) {
+            if(head.equal(this.segments[i])) {
+                selfCollison = true;
+            }
+        }
+    
+        return wallCollison || selfCollison;
+    }
+
+    setDirection (newDirection) {
+        if (this.direction === "up" && newDirection === "down") {
+            return;
+        } else if (this.direction === "right" && newDirection === "left") {
+            return;
+        } else if (this.direction === "down" && newDirection === "up") {
+            return;
+        } else if (this.direction === "left" && newDirection === "right") {
+            return;
+        }
+    
+        this.nextDirection = newDirection;
+    }
 }
 
-Apple.prototype.draw = function () {
-    this.position.drawCircle("LimeGreen");
-}
+class Apple  {
+    constructor() {
+        this.position = new Block(10, 10);
+    }
 
-Apple.prototype.move = function () {
-    let randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
-    let randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
-    this.position = new Block (randomCol, randomRow);
+    draw () {
+        this.position.drawCircle("LimeGreen");
+    }
+
+    move () {
+        let randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+        let randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+        let checkCollisionApple = snake.segments.every(function(el) {
+            return el.row != randomRow && el.col != randomCol;
+        });
+        if (checkCollisionApple) {
+            this.position = new Block (randomCol, randomRow);
+        } else {
+            apple.move();
+        }
+    }
 }
 
 let snake = new Snake();
 let apple = new Apple();
 
-let snakeIncreaseSpeed = function () {
-    if (snakeDefaultSpeed > 200) {
-        snakeDefaultSpeed -= 50;
-    } else if (snakeDefaultSpeed > 100 && snakeDefaultSpeed <= 200) {
-        snakeDefaultSpeed -= 20;
-    } 
-    return snakeDefaultSpeed--;
-};
+let snakeIncreaseSpeed = () => snakeDefaultSpeed -= (100 / score);
 
 let gameLoop = function () {
     if (!gameOverCheck) {
@@ -199,7 +204,7 @@ let gameLoop = function () {
         snake.draw();
         apple.draw();
         drawBorder();
-        setTimeout(gameLoop, snakeDefaultSpeed);  
+        setTimeout(gameLoop, snakeDefaultSpeed.toFixed(2));  
     }
 };
 
